@@ -1,4 +1,4 @@
-from domain.ports.broadcaster import Broadcaster
+from Websocket.domain.ports.broadcaster import Broadcaster
 
 class WebSocketUseCase:
     def __init__(self, broadcaster: Broadcaster):

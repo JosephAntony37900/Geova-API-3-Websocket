@@ -1,22 +1,21 @@
-# core/config.py
-import os
-from motor.motor_asyncio import AsyncIOMotorClient
-from odmantic import AIOEngine
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
-def get_engine():
-    uri = os.getenv("MONGODB_URI")
-    client = AsyncIOMotorClient(uri)
-    db_name = uri.split("/")[-1].split("?")[0]
-    return AIOEngine(client=client, database=db_name)
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
+RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
+ROUTING_KEY_TF = os.getenv("ROUTING_KEY_TF")
+ROUTING_KEY_IMX477 = os.getenv("ROUTING_KEY_IMX477")
 
 def get_rabbitmq_config():
     return {
-        "host": os.getenv("RABBITMQ_HOST"),
-        "user": os.getenv("RABBITMQ_USER"),
-        "pass": os.getenv("RABBITMQ_PASS"),
-        "routing_key": os.getenv("ROUTING_KEY_TF"),
-        "routing_key_imx": os.getenv("ROUTING_KEY_IMX477")
+        "host": RABBITMQ_HOST,
+        "user": RABBITMQ_USER,
+        "pass": RABBITMQ_PASS,
+        "routing_keys": {
+            "tf": ROUTING_KEY_TF,
+            "imx": ROUTING_KEY_IMX477
+        }
     }

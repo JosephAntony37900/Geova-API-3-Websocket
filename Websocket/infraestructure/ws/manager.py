@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import WebSocket
-from domain.ports.broadcaster import Broadcaster
+from Websocket.domain.ports.broadcaster import Broadcaster
 
 class ConnectionManager(Broadcaster):
     def __init__(self):

@@ -1,11 +1,13 @@
 import pika, json, asyncio
-from application.websocket_usecase import WebSocketUseCase
-from core.config import (
-    RABBITMQ_HOST, RABBITMQ_USER, RABBITMQ_PASS,
-    ROUTING_KEY_TF, ROUTING_KEY_IMX477
-)
+from Websocket.application.websocket_usecase import WebSocketUseCase
 
-def consume_messages(usecase: WebSocketUseCase):
+def consume_messages(usecase: WebSocketUseCase, rabbitmq_config: dict):
+    ROUTING_KEY_TF = rabbitmq_config["routing_keys"]["tf"]
+    ROUTING_KEY_IMX477 = rabbitmq_config["routing_keys"]["imx"]
+    RABBITMQ_HOST = rabbitmq_config["host"]
+    RABBITMQ_USER = rabbitmq_config["user"]
+    RABBITMQ_PASS = rabbitmq_config["pass"]
+
     def callback(ch, method, properties, body):
         try:
             message = json.loads(body)
