@@ -3,11 +3,15 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Request
 router = APIRouter()
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, request: Request):
-    manager = request.app.state.manager
-    await manager.connect(websocket)
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
     try:
         while True:
-            await websocket.receive_text()  # mantiene conexión
+            data = await websocket.receive_text()
+            print(f"Received data: {data}")
+            # Aquí podrías procesar el mensaje recibido
+            await websocket.send_text(f"Message text was: {data}")
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        print("Client disconnected")
+    except Exception as e:
+        print(f"Error: {e}")

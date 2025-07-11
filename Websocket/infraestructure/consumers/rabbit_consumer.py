@@ -2,30 +2,42 @@ import pika, json, asyncio
 from Websocket.application.websocket_usecase import WebSocketUseCase
 
 def consume_messages(usecase: WebSocketUseCase, rabbitmq_config: dict):
-    ROUTING_KEY_TF = rabbitmq_config["routing_keys"]["tf"]
-    ROUTING_KEY_IMX477 = rabbitmq_config["routing_keys"]["imx"]
-    RABBITMQ_HOST = rabbitmq_config["host"]
-    RABBITMQ_USER = rabbitmq_config["user"]
-    RABBITMQ_PASS = rabbitmq_config["pass"]
+    host = rabbitmq_config["host"]
+    user = rabbitmq_config["user"]
+    password = rabbitmq_config["pass"]
+    keys = rabbitmq_config["routing_keys"]
 
-    def callback(ch, method, properties, body):
-        try:
-            message = json.loads(body)
-            sensor_name = "TF-Luna" if method.routing_key == ROUTING_KEY_TF else "IMX477"
-            asyncio.run(usecase.send_message({"sensor": sensor_name, "data": message}))
-        except Exception as e:
-            print("❌ Error procesando mensaje:", e)
+    # Rutas y colas
+    bindings = [
+        {"queue": "sensor.TFLuna", "routing_key": keys["tf"], "sensor": "TF-Luna"},
+        {"queue": "sensor.IMX477", "routing_key": keys["imx"], "sensor": "IMX477"},    ]
 
-    credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST, credentials=credentials))
+    def callback(sensor_name):
+        def inner(ch, method, properties, body):
+            try:
+                message = json.loads(body)
+                print(f"📥 Recibido de {sensor_name}: {message}")
+                asyncio.run(usecase.send_message({"sensor": sensor_name, "data": message}))
+            except Exception as e:
+                print(f"❌ Error procesando mensaje de {sensor_name}:", e)
+        return inner
+
+    credentials = pika.PlainCredentials(user, password)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host, credentials=credentials))
     channel = connection.channel()
 
-    for key in [ROUTING_KEY_TF, ROUTING_KEY_IMX477]:
-        channel.queue_declare(queue=key, durable=True)
-        channel.queue_bind(exchange="amq.topic", queue=key, routing_key=key)
-        channel.basic_consume(queue=key, on_message_callback=callback, auto_ack=True)
+    for binding in bindings:
+        queue = binding["queue"]
+        routing_key = binding["routing_key"]
+        sensor_name = binding["sensor"]
+
+        # Declarar y bindear
+        channel.queue_declare(queue=queue, durable=True)
+        channel.queue_bind(exchange="amq.topic", queue=queue, routing_key=routing_key)
+        channel.basic_consume(queue=queue, on_message_callback=callback(sensor_name), auto_ack=True)
 
     print("📡 Escuchando RabbitMQ...")
+
     try:
         channel.start_consuming()
     except KeyboardInterrupt:
