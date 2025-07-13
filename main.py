@@ -8,6 +8,9 @@ from Websocket.infraestructure.routes.routes_ws import router as ws_router
 from Websocket.infraestructure.consumers.rabbit_consumer import consume_messages
 
 app = FastAPI()
+@app.get("/")
+def root():
+    return {"message": "Geova WebSocket API está corriendo correctamente 🚀"}
 
 # Obtener configuración
 rabbitmq_config = get_rabbitmq_config()
