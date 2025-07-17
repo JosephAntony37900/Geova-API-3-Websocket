@@ -7,10 +7,12 @@ def consume_messages(usecase: WebSocketUseCase, rabbitmq_config: dict):
     password = rabbitmq_config["pass"]
     keys = rabbitmq_config["routing_keys"]
 
-    # Rutas y colas
+    # Lista de bindings por sensor
     bindings = [
-        {"queue": "sensor.TFLuna", "routing_key": keys["tf"], "sensor": "TF-Luna"},
-        {"queue": "sensor.IMX477", "routing_key": keys["imx"], "sensor": "IMX477"},    ]
+        {"exchange": "amq.topic", "queue": "sensor.TFLuna",     "routing_key": keys["tf"],   "sensor": "TF-Luna"},
+        {"exchange": "amq.topic", "queue": "sensor.IMX477",     "routing_key": keys["imx"],  "sensor": "IMX477"},
+        {"exchange": "mpu.topic", "queue": "sensor.inclinacion", "routing_key": keys["mpu"],  "sensor": "MPU6050"}
+    ]
 
     def callback(sensor_name):
         def inner(ch, method, properties, body):
@@ -27,13 +29,18 @@ def consume_messages(usecase: WebSocketUseCase, rabbitmq_config: dict):
     channel = connection.channel()
 
     for binding in bindings:
+        exchange = binding["exchange"]
         queue = binding["queue"]
         routing_key = binding["routing_key"]
         sensor_name = binding["sensor"]
 
-        # Declarar y bindear
+        # Declarar exchange (por si no existe)
+        channel.exchange_declare(exchange=exchange, exchange_type="topic", durable=True)
+
+        # Declarar cola y bindear
         channel.queue_declare(queue=queue, durable=True)
-        channel.queue_bind(exchange="amq.topic", queue=queue, routing_key=routing_key)
+        channel.queue_bind(exchange=exchange, queue=queue, routing_key=routing_key)
+
         channel.basic_consume(queue=queue, on_message_callback=callback(sensor_name), auto_ack=True)
 
     print("📡 Escuchando RabbitMQ...")
