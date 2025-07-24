@@ -9,6 +9,7 @@ RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
 ROUTING_KEY_TF = os.getenv("ROUTING_KEY_TF")
 ROUTING_KEY_IMX477 = os.getenv("ROUTING_KEY_IMX477")
 ROUTING_KEY_MPU6050 = os.getenv("ROUTING_KEY_MPU6050")
+ROUTING_KEY_HX = os.getenv("ROUTING_KEY_HC")
 
 def get_rabbitmq_config():
     return {
@@ -18,6 +19,7 @@ def get_rabbitmq_config():
         "routing_keys": {
             "tf": ROUTING_KEY_TF,
             "imx": ROUTING_KEY_IMX477,
-            "mpu": ROUTING_KEY_MPU6050
+            "mpu": ROUTING_KEY_MPU6050,
+            "hc": ROUTING_KEY_HX
         }
     }
